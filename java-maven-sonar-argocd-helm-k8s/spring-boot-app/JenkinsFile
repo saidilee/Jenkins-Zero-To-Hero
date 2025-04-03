@@ -49,18 +49,24 @@ pipeline {
         environment {
             GIT_REPO_NAME = "Jenkins-Zero-To-Hero"
             GIT_USER_NAME = "saidilee"
+            BUILD_NUMBER = "${env.BUILD_NUMBER}"
         }
         steps {
             withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
                 sh '''
-                    git config user.email "gsaidileep123@gmail.com"
-                    git config user.name "saidilee"
-                    BUILD_NUMBER=${BUILD_NUMBER}
-                    sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
-                    git add java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
-                    git commit -m "Update deployment image at new version ${BUILD_NUMBER}"
-                    git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
-                '''
+                        # Create a temporary deployment file
+                        cp java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml deployment.yml.temp
+                        
+                        # Replace placeholders with dynamic values
+                        sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" deployment.yml.temp
+                        sed -i "s/replaceBuildNumber/${BUILD_NUMBER}/g" deployment.yml.temp
+                        
+                        # Apply the deployment using the updated file
+                        kubectl apply -f deployment.yml.temp
+                        
+                        # Clean up the temporary file
+                        rm deployment.yml.temp
+                    '''
             }
         }
     }
