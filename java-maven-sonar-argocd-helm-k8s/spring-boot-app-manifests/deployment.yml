@@ -13,6 +13,7 @@ spec:
     metadata:
       labels:
         app: spring-boot-app
+        build-number: replaceBuildNumber 
     spec:
       containers:
       - name: spring-boot-app
